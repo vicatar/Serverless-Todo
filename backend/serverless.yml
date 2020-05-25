@@ -4,6 +4,10 @@ service:
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
+  - serverless-dynamodb-local
+  - serverless-offline
 
 provider:
   name: aws
@@ -11,6 +15,29 @@ provider:
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
+
+  environment:
+    TODOS_TABLE: Todos-${self:provider.stage}
+    IS_OFFLINE: true
+
+custom:
+  serverless-offline:
+    httpPort: 3003
+
+  dynamodb:
+    start:
+      seed: true
+      port: 8000
+      inMemory: true
+      migrate: true
+    stages:
+      - dev
+    seed:
+      todos:
+        sources:
+          - table: ${self:provider.environment.TODOS_TABLE}
+            sources: [./todo.json]
+       
 
 functions:
 
@@ -24,9 +51,14 @@ functions:
       - http:
           method: get
           path: todos
+          cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # TODO: Configure this function
-  GetTodos:
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
     events:
@@ -61,3 +93,14 @@ functions:
 resources:
   Resources:
     # TODO: Add any necessary AWS resources
+    TodoDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: todoid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: todoid
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.TODOS_TABLE}
