@@ -7,34 +7,31 @@ export class TodoItemAccess {
 
   constructor(
     private readonly docClient: DocumentClient = createDynamoDBClient(),
-    private readonly todosTable = process.env.TODOS_TABLE) {
-  }
+//    private readonly indexName = process.env.TODO_ID_INDEX,
+    private readonly todosTable = process.env.TODOS_TABLE
+    ) { }
 
   async getAllTodoItems(): Promise<TodoItem[]> {
     console.log('Getting all TodoItems')
 
     const result = await this.docClient.scan({
       TableName: this.todosTable
+//      IndexName: this.indexName,
     }).promise()
 
-    const items = result.Items
-    console.log(result.Items)
-    return items as TodoItem[]
+    return result.Items as TodoItem[]
   }
 
-  async createTodoItem(TodoItem: TodoItem): Promise<TodoItem> {
+  async createTodoItem(todoItem: TodoItem) {
     await this.docClient.put({
       TableName: this.todosTable,
-      Item: TodoItem
-
+      Item: todoItem
     }).promise()
-
-    return TodoItem
   }
 }
 
 function createDynamoDBClient() {
-  if (process.env.IS_OFFLINE) {
+  if (process.env.IS_OFFLINE == "true") {
     console.log('Creating a local DynamoDB instance')
     return new AWS.DynamoDB.DocumentClient({
       region: 'localhost',

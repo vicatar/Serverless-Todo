@@ -1,4 +1,18 @@
-{ 
-    "todoid": "2",
-    "CreatedAt" : "Jan 2020" 
-}
+[
+    {
+        "todoId": "1",
+        "userId": "1",
+        "name": "Vic",
+        "createdAt": "Jan-7-2020",
+        "dueDate": "Jan-7-2021",
+        "done": false
+    },
+    {
+        "todoId": "2",
+        "userId": "1",
+        "name": "Vic",
+        "createdAt": "Jan-25-2020",
+        "dueDate": "Feb-7-2020",
+        "done": false
+    }
+]

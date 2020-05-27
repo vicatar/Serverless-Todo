@@ -11,10 +11,10 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
 
   stage: ${opt:stage, 'dev'}
-  region: ${opt:region, 'us-east-1'}
+  region: ${opt:region, 'us-west-1'}
 
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
@@ -52,10 +52,11 @@ functions:
           method: get
           path: todos
           cors: true
+#          authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:Query
+          - dynamodb:Scan
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # TODO: Configure this function
@@ -65,7 +66,12 @@ functions:
       - http:
           method: post
           path: todos
-
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Put
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      
   # TODO: Configure this function
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
@@ -97,10 +103,10 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: todoid
+          - AttributeName: todoId
             AttributeType: S
         KeySchema:
-          - AttributeName: todoid
+          - AttributeName: todoId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
