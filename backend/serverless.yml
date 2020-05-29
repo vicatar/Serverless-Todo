@@ -18,9 +18,15 @@ provider:
 
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
-    IS_OFFLINE: true
+    IS_OFFLINE: false
 
 custom:
+  documentation:
+    models:
+      - name: CreateTodoRequest
+        contentType: application/json
+        schema: ${file(models/create-todo-request.json)}
+      
   serverless-offline:
     httpPort: 3003
 
@@ -37,7 +43,7 @@ custom:
         sources:
           - table: ${self:provider.environment.TODOS_TABLE}
             sources: [./todo.json]
-       
+
 
 functions:
 
@@ -66,12 +72,19 @@ functions:
       - http:
           method: post
           path: todos
+          cors: true
+          reqValidatorName: RequestBodyValidator
+          documentation:
+            summary: Create a new todo
+            description: Create a new todo
+            requestModels:
+              'application/json': CreateTodoRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:Put
+          - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-      
+    
   # TODO: Configure this function
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
@@ -110,3 +123,12 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
+    
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
