@@ -1,5 +1,6 @@
 import { TodoItem } from '../models/TodoItem'
 import { TodoItemAccess } from '../dataLayer/todosAccess'
+import { APIGatewayProxyEvent } from 'aws-lambda';
 
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 
@@ -24,6 +25,17 @@ export async function createTodoItem(createTodoRequest: CreateTodoRequest): Prom
   };
 
   await todoItemAccess.createTodoItem(newTodo);
+
+  return 
+}
+
+export async function deleteTodoItem(event: APIGatewayProxyEvent) {
+  const todoId = event.pathParameters.todoId;
+
+  if (!(await todoItemAccess.getTodo(todoId))) {
+    return false;
+  }
+  await todoItemAccess.deleteTodoItem(todoId);
 
   return 
 }

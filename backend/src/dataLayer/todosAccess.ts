@@ -28,6 +28,26 @@ export class TodoItemAccess {
       Item: todoItem
     }).promise()
   }
+
+  async deleteTodoItem(todoId: string) {
+    await this.docClient.delete({
+      TableName: this.todosTable,
+      Key: {
+        todoId
+      }
+    }).promise()
+  }
+
+  async getTodo(todoId: string) {
+    const result = await this.docClient.get({
+      TableName: this.todosTable,
+      Key: {
+        todoId,
+      }
+    }).promise();
+
+    return result.Item as TodoItem;
+  }
 }
 
 function createDynamoDBClient() {
