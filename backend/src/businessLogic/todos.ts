@@ -1,3 +1,5 @@
+import * as uuid from 'uuid';
+
 import { TodoItem } from '../models/TodoItem'
 import { TodoItemAccess } from '../dataLayer/todosAccess'
 import { APIGatewayProxyEvent } from 'aws-lambda';
@@ -5,19 +7,24 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
 import { createLogger } from '../utils/logger'
+import { getUserId } from '../lambda/utils';
 
 const todoItemAccess = new TodoItemAccess()
 const logger = createLogger('businessLogic');
 
-export async function getAllTodoItems(): Promise<TodoItem[]> {
-  return todoItemAccess.getAllTodoItems()
+export async function getAllTodoItems(event: APIGatewayProxyEvent): Promise<TodoItem[]> {
+  const userId = getUserId(event);
+  logger.info('Get todo items for ', userId);
+
+  return todoItemAccess.getAllTodoItems(userId)
 }
 
-export async function createTodoItem(createTodoRequest: CreateTodoRequest): Promise<TodoItem> {
+export async function createTodoItem(event: APIGatewayProxyEvent,
+                    createTodoRequest: CreateTodoRequest): Promise<TodoItem> {
 
   const createdAt = new Date(Date.now()).toISOString();
-  const userId = 'John'
-  const todoId = '12'
+  const userId = getUserId(event);
+  const todoId = uuid.v4();
   
   const newTodo = {
     userId,
@@ -27,19 +34,21 @@ export async function createTodoItem(createTodoRequest: CreateTodoRequest): Prom
     ...createTodoRequest
   };
 
-  await todoItemAccess.createTodoItem(newTodo);
   logger.info('Creating new todo item');
+  await todoItemAccess.createTodoItem(newTodo);
 
-  return 
-}
+  return newTodo
+}   
+
 
 export async function deleteTodoItem(event: APIGatewayProxyEvent) {
   const todoId = event.pathParameters.todoId;
+  const userId = getUserId(event);
 
-  if (!(await todoItemAccess.getTodo(todoId))) {
+  if (!(await todoItemAccess.getTodo(userId, todoId))) {
     return false;
   }
-  await todoItemAccess.deleteTodoItem(todoId);
+  await todoItemAccess.deleteTodoItem(userId, todoId);
 
   return 
 }
@@ -47,11 +56,12 @@ export async function deleteTodoItem(event: APIGatewayProxyEvent) {
 export async function updateTodoItem(event: APIGatewayProxyEvent,
                         updateTodoRequest: UpdateTodoRequest) {
   const todoId = event.pathParameters.todoId;
+  const userId = getUserId(event);
 
-  if (!(await todoItemAccess.getTodo(todoId))) {
+  if (!(await todoItemAccess.getTodo(userId, todoId))) {
     return false;
   }
-  await todoItemAccess.updateTodoItem(todoId, updateTodoRequest);
+  await todoItemAccess.updateTodoItem(userId, todoId, updateTodoRequest);
   logger.info('Update todo item');
 
   return 
