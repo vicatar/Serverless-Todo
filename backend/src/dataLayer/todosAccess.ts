@@ -2,7 +2,12 @@ import * as AWS  from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 
 import { TodoItem } from '../models/TodoItem'
-import { TodoUpdate } from '../models/TodoUpdate';
+import { TodoUpdate } from '../models/TodoUpdate'
+import { SignedURLRequest} from '../models/SignedUrlRequest'
+
+const s3 = new AWS.S3({
+  signatureVersion: 'v4'
+})
 
 export class TodoItemAccess {
 
@@ -76,6 +81,10 @@ export class TodoItemAccess {
       }
     }).promise();
   }
+}
+
+export function getPresignedUploadURL(createSignedUrlRequest: SignedURLRequest) {
+  return s3.getSignedUrl('putObject', createSignedUrlRequest);
 }
 
 function createDynamoDBClient() {

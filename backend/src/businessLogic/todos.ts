@@ -1,7 +1,7 @@
 import * as uuid from 'uuid';
 
 import { TodoItem } from '../models/TodoItem'
-import { TodoItemAccess } from '../dataLayer/todosAccess'
+import { TodoItemAccess, getPresignedUploadURL } from '../dataLayer/todosAccess'
 import { APIGatewayProxyEvent } from 'aws-lambda';
 
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
@@ -11,6 +11,7 @@ import { getUserId } from '../lambda/utils';
 
 const todoItemAccess = new TodoItemAccess()
 const logger = createLogger('businessLogic');
+const bucketName = process.env.IMAGES_S3_BUCKET
 
 export async function getAllTodoItems(event: APIGatewayProxyEvent): Promise<TodoItem[]> {
   const userId = getUserId(event);
@@ -31,6 +32,7 @@ export async function createTodoItem(event: APIGatewayProxyEvent,
     todoId,
     createdAt,
     done: false,
+    attachmentUrl: `https://${bucketName}.s3.amazonaws.com/${todoId}`,
     ...createTodoRequest
   };
 
@@ -65,4 +67,18 @@ export async function updateTodoItem(event: APIGatewayProxyEvent,
   logger.info('Update todo item');
 
   return 
+}
+
+export async function generateUploadUrl(event: APIGatewayProxyEvent) {
+  const urlExpiration = process.env.SIGNED_URL_EXPIRATION;
+  const todoId = event.pathParameters.todoId;
+
+  const createSignedUrlRequest = {
+    Bucket: bucketName,
+    Key: todoId,
+    Expires: +urlExpiration
+  }
+
+  logger.info('Generated Upload URL');
+  return getPresignedUploadURL(createSignedUrlRequest);
 }
