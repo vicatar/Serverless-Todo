@@ -4,8 +4,10 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate'
 import { SignedURLRequest} from '../models/SignedUrlRequest'
+import * as AWSXRay from 'aws-xray-sdk'
+const XAWS = AWSXRay.captureAWS(AWS);
 
-const s3 = new AWS.S3({
+const s3 = new XAWS.S3({
   signatureVersion: 'v4'
 })
 
@@ -96,5 +98,5 @@ function createDynamoDBClient() {
     })
   }
 
-  return new AWS.DynamoDB.DocumentClient()
+  return new XAWS.DynamoDB.DocumentClient();
 }
