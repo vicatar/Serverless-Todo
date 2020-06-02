@@ -17,7 +17,7 @@ export async function getAllTodoItems(event: APIGatewayProxyEvent): Promise<Todo
   const userId = getUserId(event);
   logger.info('Get todo items for ', userId);
 
-  return todoItemAccess.getAllTodoItems(userId)
+  return await todoItemAccess.getAllTodoItems(userId)
 }
 
 export async function createTodoItem(event: APIGatewayProxyEvent,
